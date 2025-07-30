@@ -172,6 +172,80 @@ async def delete_session(session_id: str, api_key: str = Depends(verify_api_key)
     del sessions[session_id]
     return {"message": "Session deleted successfully"}
 
+@app.get("/langgraph")
+async def langgraph_info():
+    """LangGraph Studio endpoint - exposes graph structure and metadata"""
+    return {
+        "name": "real-estate-agent",
+        "version": "1.0.0",
+        "description": "Real Estate Agent Chatbot using LangGraph",
+        "graph": {
+            "nodes": [
+                {
+                    "name": "chatbot",
+                    "type": "llm",
+                    "config": {
+                        "model": "gpt-4o-mini",
+                        "temperature": 0
+                    }
+                }
+            ],
+            "edges": [
+                {
+                    "from": "START",
+                    "to": "chatbot"
+                },
+                {
+                    "from": "chatbot", 
+                    "to": "END"
+                }
+            ]
+        },
+        "endpoints": {
+            "chat": "/chat",
+            "health": "/health",
+            "sessions": "/sessions/{session_id}",
+            "langgraph": "/langgraph"
+        },
+        "authentication": {
+            "type": "bearer",
+            "header": "Authorization"
+        }
+    }
+
+@app.post("/langgraph/invoke")
+async def langgraph_invoke(
+    request: dict,
+    api_key: str = Depends(verify_api_key)
+):
+    """LangGraph Studio invoke endpoint - direct graph execution"""
+    try:
+        # Extract the input from LangGraph Studio format
+        messages = request.get("messages", [])
+        config = request.get("config", {})
+        
+        # Convert to our format
+        if messages:
+            # Get the last human message
+            last_message = messages[-1]
+            if isinstance(last_message, dict) and last_message.get("type") == "human":
+                user_message = last_message.get("content", "")
+                
+                # Create our chat request format
+                chat_request = ChatRequest(
+                    message=user_message,
+                    session_id=config.get("thread_id", str(uuid.uuid4()))
+                )
+                
+                # Use our existing chat logic
+                result = await chat_endpoint(chat_request, api_key)
+                return result
+        
+        return {"error": "Invalid request format"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LangGraph invoke error: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
