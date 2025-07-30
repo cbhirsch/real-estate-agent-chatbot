@@ -1,0 +1,31 @@
+from dotenv import load_dotenv
+load_dotenv()
+
+from langchain_openai import ChatOpenAI
+from typing import Annotated
+from typing_extensions import TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langchain_core.tools import tool
+from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import interrupt, Command
+from langchain_core.messages import BaseMessage
+
+class State(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]
+
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+def chatbot_node(state: State) -> State:
+    msg = llm.invoke(state["messages"])
+    return {"messages": [msg]}
+
+memory = MemorySaver()
+builder = StateGraph(State)
+builder.add_node("chatbot", chatbot_node)
+
+builder.add_edge(START, "chatbot")
+builder.add_edge("chatbot", END)
+
+graph = builder.compile(checkpointer=memory)
