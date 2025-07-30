@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
 from langchain_openai import ChatOpenAI
 from typing import Annotated
 from typing_extensions import TypedDict
@@ -11,6 +12,12 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import interrupt, Command
 from langchain_core.messages import BaseMessage
+
+# LangSmith setup
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY", "")
+os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT", "real-estate-agent")
 
 class State(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
@@ -29,3 +36,8 @@ builder.add_edge(START, "chatbot")
 builder.add_edge("chatbot", END)
 
 graph = builder.compile(checkpointer=memory)
+
+# For LangGraph CLI compatibility
+def get_graph():
+    """Return the graph for LangGraph CLI"""
+    return graph

@@ -1,36 +1,11 @@
 {
+  "graphs": {
+    "real-estate-agent": {
+      "entrypoint": "real_estate_agent:graph",
+      "description": "Real Estate Agent Chatbot using LangGraph"
+    }
+  },
   "name": "real-estate-agent",
   "version": "1.0.0",
-  "description": "Real Estate Agent Chatbot using LangGraph",
-  "graph": {
-    "nodes": [
-      {
-        "name": "chatbot",
-        "type": "llm",
-        "config": {
-          "model": "gpt-4o-mini",
-          "temperature": 0
-        }
-      }
-    ],
-    "edges": [
-      {
-        "from": "START",
-        "to": "chatbot"
-      },
-      {
-        "from": "chatbot",
-        "to": "END"
-      }
-    ]
-  },
-  "endpoints": {
-    "chat": "/chat",
-    "health": "/health",
-    "sessions": "/sessions/{session_id}"
-  },
-  "authentication": {
-    "type": "bearer",
-    "header": "Authorization"
-  }
+  "description": "Real Estate Agent Chatbot using LangGraph"
 } 

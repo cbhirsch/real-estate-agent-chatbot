@@ -1,0 +1,8 @@
+graphs:
+  real-estate-agent:
+    entrypoint: real_estate_agent:graph
+    description: "Real Estate Agent Chatbot using LangGraph"
+
+server:
+  port: 2024
+  host: 0.0.0.0 
