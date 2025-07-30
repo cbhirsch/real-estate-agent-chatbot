@@ -4,8 +4,5 @@
       "entrypoint": "real_estate_agent:graph",
       "description": "Real Estate Agent Chatbot using LangGraph"
     }
-  },
-  "name": "real-estate-agent",
-  "version": "1.0.0",
-  "description": "Real Estate Agent Chatbot using LangGraph"
+  }
 } 
