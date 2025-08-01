@@ -9,4 +9,5 @@ typing-extensions>=4.8.0
 requests>=2.31.0
 langsmith>=0.0.69
 ipykernel>=6.30.0
-PyJWT>=2.8.0 
+PyJWT>=2.8.0
+python-multipart>=0.0.6 
