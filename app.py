@@ -35,6 +35,35 @@ def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security
         )
     return api_key
 
+def verify_oauth2_token(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
+    """Verify OAuth2 token from Authorization header"""
+    try:
+        token = credentials.credentials
+        # Decode and verify the JWT token
+        payload = jwt.decode(token, OAUTH2_SECRET, algorithms=["HS256"])
+        return payload.get("sub", "unknown")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+def verify_hybrid_auth(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
+    """Verify either API key or OAuth2 token"""
+    token = credentials.credentials
+    
+    # First try API key
+    if token in API_KEYS:
+        return "api_key"
+    
+    # Then try OAuth2 token
+    try:
+        payload = jwt.decode(token, OAUTH2_SECRET, algorithms=["HS256"])
+        return payload.get("sub", "unknown")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid API key or token")
+
 # OAuth2 endpoints for VAPI
 @app.post("/oauth/token")
 async def oauth_token(
@@ -179,7 +208,7 @@ async def chat_endpoint(request: ChatRequest, api_key: str = Depends(verify_api_
 @app.post("/chat/completions")
 async def chat_completions(
     request: dict,
-    api_key: str = Depends(verify_api_key)
+    auth: str = Depends(verify_hybrid_auth)
 ):
     """OpenAI-compatible chat completions endpoint for VAPI"""
     try:
