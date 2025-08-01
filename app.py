@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 import uuid
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+import jwt
+import time
 
 # Import your chatbot components
 from real_estate_agent import graph, State
@@ -19,6 +21,9 @@ app = FastAPI(title="Real Estate Agent API", version="1.0.0")
 security = HTTPBearer()
 API_KEYS = os.getenv("API_KEYS", "").split(",")  # Comma-separated list of valid API keys
 
+# OAuth2 settings - reuse existing API keys
+OAUTH2_SECRET = os.getenv("API_KEYS", "").split(",")[0] if os.getenv("API_KEYS") else "fallback-secret"
+
 def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
     """Verify API key from Authorization header"""
     api_key = credentials.credentials
@@ -29,6 +34,48 @@ def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security
             headers={"WWW-Authenticate": "Bearer"},
         )
     return api_key
+
+# OAuth2 endpoints for VAPI
+@app.post("/oauth/token")
+async def oauth_token(
+    grant_type: str = "client_credentials",
+    client_id: Optional[str] = None,
+    client_secret: Optional[str] = None
+):
+    """OAuth2 token endpoint for VAPI authentication"""
+    # Simple OAuth2 implementation - in production, use proper OAuth2 library
+    if grant_type == "client_credentials":
+        # For VAPI, we'll accept any valid API key as client credentials
+        if client_secret in API_KEYS:
+            # Generate a JWT token
+            payload = {
+                "sub": client_id or "vapi-client",
+                "exp": time.time() + 3600,  # 1 hour expiration
+                "iat": time.time(),
+                "scope": "chat"
+            }
+            token = jwt.encode(payload, OAUTH2_SECRET, algorithm="HS256")
+            
+            return {
+                "access_token": token,
+                "token_type": "Bearer",
+                "expires_in": 3600,
+                "scope": "chat"
+            }
+        else:
+            raise HTTPException(status_code=401, detail="Invalid client credentials")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported grant type")
+
+@app.get("/oauth/token")
+async def oauth_token_info():
+    """OAuth2 token info endpoint"""
+    return {
+        "issuer": "real-estate-agent",
+        "authorization_endpoint": "/oauth/authorize",
+        "token_endpoint": "/oauth/token",
+        "scopes_supported": ["chat"]
+    }
 
 # Pydantic models for request/response
 class ChatRequest(BaseModel):
