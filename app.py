@@ -77,6 +77,24 @@ async def oauth_token_info():
         "scopes_supported": ["chat"]
     }
 
+@app.get("/.well-known/oauth-authorization-server")
+async def oauth_discovery():
+    """OAuth2 discovery endpoint for VAPI"""
+    return {
+        "issuer": "https://web-production-dd65f.up.railway.app",
+        "authorization_endpoint": "https://web-production-dd65f.up.railway.app/oauth/authorize",
+        "token_endpoint": "https://web-production-dd65f.up.railway.app/oauth/token",
+        "token_endpoint_auth_methods_supported": ["client_secret_post"],
+        "grant_types_supported": ["client_credentials"],
+        "scopes_supported": ["chat"],
+        "response_types_supported": ["token"]
+    }
+
+@app.get("/oauth/authorize")
+async def oauth_authorize():
+    """OAuth2 authorization endpoint (placeholder)"""
+    return {"message": "Authorization endpoint - not implemented for this use case"}
+
 # Pydantic models for request/response
 class ChatRequest(BaseModel):
     message: str
