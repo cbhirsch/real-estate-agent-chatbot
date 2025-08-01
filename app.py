@@ -63,6 +63,9 @@ async def oauth_token(
                 "scope": "chat"
             }
         else:
+            # Debug: print what we received vs what we expect
+            print(f"Received client_secret: {client_secret}")
+            print(f"Available API_KEYS: {API_KEYS}")
             raise HTTPException(status_code=401, detail="Invalid client credentials")
     else:
         raise HTTPException(status_code=400, detail="Unsupported grant type")
