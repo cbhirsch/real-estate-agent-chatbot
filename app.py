@@ -163,6 +163,66 @@ async def chat_endpoint(request: ChatRequest, api_key: str = Depends(verify_api_
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
 
+# OpenAI-compatible endpoint for VAPI
+@app.post("/chat/completions")
+async def chat_completions(
+    request: dict,
+    api_key: str = Depends(verify_api_key)
+):
+    """OpenAI-compatible chat completions endpoint for VAPI"""
+    try:
+        # Extract messages from VAPI request
+        messages = request.get("messages", [])
+        
+        if not messages:
+            raise HTTPException(status_code=400, detail="No messages provided")
+        
+        # Convert OpenAI format to our format
+        conversation_messages = []
+        for msg in messages:
+            if msg.get("role") == "user":
+                conversation_messages.append(HumanMessage(content=msg.get("content", "")))
+            elif msg.get("role") == "assistant":
+                conversation_messages.append(AIMessage(content=msg.get("content", "")))
+        
+        # Create state for the graph
+        state = State(messages=conversation_messages)
+        
+        # Run the graph
+        config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+        result = graph.invoke(state, config=config)
+        
+        # Extract AI response
+        ai_message = result["messages"][-1]
+        
+        # Format response in OpenAI-compatible format
+        response = {
+            "id": f"chatcmpl-{uuid.uuid4()}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": "real-estate-agent",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": ai_message.content
+                    },
+                    "finish_reason": "stop"
+                }
+            ],
+            "usage": {
+                "prompt_tokens": len(str(messages)),
+                "completion_tokens": len(ai_message.content),
+                "total_tokens": len(str(messages)) + len(ai_message.content)
+            }
+        }
+        
+        return response
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat completion error: {str(e)}")
+
 @app.post("/vapi/webhook", response_model=VAPIResponse)
 async def vapi_webhook(
     request: VAPIRequest,
