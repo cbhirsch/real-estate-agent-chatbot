@@ -27,6 +27,9 @@ A FastAPI-based chatbot using LangGraph and OpenAI for real estate assistance.
    # API Key for FastAPI authentication
    API_KEY=your_api_key_here
    
+   # OAuth2 Secret for VAPI integration
+   OAUTH2_SECRET=your_oauth2_secret_here
+   
    # LangSmith Configuration (optional but recommended)
    LANGCHAIN_API_KEY=your_langsmith_api_key_here
    LANGCHAIN_PROJECT=real-estate-agent

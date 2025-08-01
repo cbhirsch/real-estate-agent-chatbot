@@ -23,6 +23,7 @@ This guide will help you deploy your Real Estate Agent Chatbot to various platfo
      ```
      OPENAI_API_KEY=your_openai_api_key_here
      API_KEY=your_api_key_here
+     OAUTH2_SECRET=your_oauth2_secret_here
      LANGCHAIN_API_KEY=your_langsmith_api_key_here
      LANGCHAIN_PROJECT=real-estate-agent
      ```

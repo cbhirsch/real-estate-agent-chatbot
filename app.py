@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header, Depends, Security
+from fastapi import FastAPI, HTTPException, Header, Depends, Security, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -21,8 +21,8 @@ app = FastAPI(title="Real Estate Agent API", version="1.0.0")
 security = HTTPBearer()
 API_KEYS = os.getenv("API_KEY", "").split(",")  # Comma-separated list of valid API keys
 
-# OAuth2 settings - reuse existing API keys
-OAUTH2_SECRET = os.getenv("API_KEY", "").split(",")[0] if os.getenv("API_KEY") else "fallback-secret"
+# OAuth2 settings - use a separate secret for OAuth2
+OAUTH2_SECRET = os.getenv("OAUTH2_SECRET", "oauth2-secret-key-for-vapi")
 
 def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
     """Verify API key from Authorization header"""
@@ -38,15 +38,22 @@ def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security
 # OAuth2 endpoints for VAPI
 @app.post("/oauth/token")
 async def oauth_token(
-    grant_type: str = "client_credentials",
-    client_id: Optional[str] = None,
-    client_secret: Optional[str] = None
+    grant_type: str = Form("client_credentials"),
+    client_id: Optional[str] = Form(None),
+    client_secret: Optional[str] = Form(None)
 ):
     """OAuth2 token endpoint for VAPI authentication"""
+    # Debug logging
+    print(f"OAuth2 request received:")
+    print(f"  grant_type: {grant_type}")
+    print(f"  client_id: {client_id}")
+    print(f"  client_secret: {client_secret[:20]}..." if client_secret else "None")
+    print(f"  Available API_KEYS: {[key[:20] + '...' for key in API_KEYS]}")
+    
     # Simple OAuth2 implementation - in production, use proper OAuth2 library
     if grant_type == "client_credentials":
-        # For VAPI, we'll accept any valid API key as client credentials
-        if client_secret in API_KEYS:
+        # For VAPI, we'll accept the OAuth2 secret as client credentials
+        if client_secret and client_secret == OAUTH2_SECRET:
             # Generate a JWT token
             payload = {
                 "sub": client_id or "vapi-client",
@@ -56,6 +63,7 @@ async def oauth_token(
             }
             token = jwt.encode(payload, OAUTH2_SECRET, algorithm="HS256")
             
+            print(f"OAuth2 token generated successfully for client: {client_id}")
             return {
                 "access_token": token,
                 "token_type": "Bearer",
@@ -64,8 +72,9 @@ async def oauth_token(
             }
         else:
             # Debug: print what we received vs what we expect
-            print(f"Received client_secret: {client_secret}")
-            print(f"Available API_KEYS: {API_KEYS}")
+            print(f"OAuth2 authentication failed:")
+            print(f"  client_secret provided: {bool(client_secret)}")
+            print(f"  client_secret in API_KEYS: {client_secret in API_KEYS if client_secret else False}")
             raise HTTPException(status_code=401, detail="Invalid client credentials")
     else:
         raise HTTPException(status_code=400, detail="Unsupported grant type")
