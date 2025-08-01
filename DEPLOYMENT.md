@@ -22,7 +22,7 @@ This guide will help you deploy your Real Estate Agent Chatbot to various platfo
    - Add all variables from your `.env` file:
      ```
      OPENAI_API_KEY=your_openai_api_key_here
-     API_KEYS=your_api_key_1,your_api_key_2,your_api_key_3
+     API_KEY=your_api_key_here
      LANGCHAIN_API_KEY=your_langsmith_api_key_here
      LANGCHAIN_PROJECT=real-estate-agent
      ```
@@ -79,7 +79,7 @@ This guide will help you deploy your Real Estate Agent Chatbot to various platfo
 4. **Set environment variables:**
    ```bash
    heroku config:set OPENAI_API_KEY=your_openai_api_key_here
-   heroku config:set API_KEYS=your_api_key_1,your_api_key_2,your_api_key_3
+   heroku config:set API_KEY=your_api_key_here
    heroku config:set LANGCHAIN_API_KEY=your_langsmith_api_key_here
    heroku config:set LANGCHAIN_PROJECT=real-estate-agent
    ```
@@ -97,7 +97,7 @@ Make sure to set these in your deployment platform:
 
 ```bash
 OPENAI_API_KEY=your_openai_api_key_here
-API_KEYS=your_api_key_1,your_api_key_2,your_api_key_3
+API_KEY=your_api_key_here
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
 LANGCHAIN_PROJECT=real-estate-agent
 ```
