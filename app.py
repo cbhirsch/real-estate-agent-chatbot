@@ -6,8 +6,11 @@ import os
 from dotenv import load_dotenv
 import uuid
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
-import jwt
 import time
+from authlib.integrations.starlette_client import OAuth
+from authlib.oauth2.rfc6749 import grants
+from authlib.oauth2.rfc7636 import CodeChallenge
+from starlette.middleware.sessions import SessionMiddleware
 
 # Import your chatbot components
 from real_estate_agent import graph, State
@@ -125,16 +128,50 @@ async def oauth_discovery():
         "issuer": "https://web-production-dd65f.up.railway.app",
         "authorization_endpoint": "https://web-production-dd65f.up.railway.app/oauth/authorize",
         "token_endpoint": "https://web-production-dd65f.up.railway.app/oauth/token",
+        "token_introspection_endpoint": "https://web-production-dd65f.up.railway.app/oauth/introspect",
         "token_endpoint_auth_methods_supported": ["client_secret_post"],
         "grant_types_supported": ["client_credentials"],
         "scopes_supported": ["chat"],
-        "response_types_supported": ["token"]
+        "response_types_supported": ["token"],
+        "introspection_endpoint_auth_methods_supported": ["client_secret_post"]
     }
 
 @app.get("/oauth/authorize")
 async def oauth_authorize():
     """OAuth2 authorization endpoint (placeholder)"""
     return {"message": "Authorization endpoint - not implemented for this use case"}
+
+@app.post("/oauth/introspect")
+async def oauth_introspect(
+    token: str = Form(...),
+    token_type_hint: Optional[str] = Form(None)
+):
+    """OAuth2 token introspection endpoint (RFC 7662)"""
+    try:
+        # Decode and verify the JWT token
+        payload = jwt.decode(token, OAUTH2_SECRET, algorithms=["HS256"])
+        
+        # Check if token is expired
+        current_time = time.time()
+        if payload.get("exp", 0) < current_time:
+            return {
+                "active": False,
+                "exp": payload.get("exp"),
+                "iat": payload.get("iat"),
+                "scope": payload.get("scope"),
+                "sub": payload.get("sub")
+            }
+        
+        return {
+            "active": True,
+            "exp": payload.get("exp"),
+            "iat": payload.get("iat"),
+            "scope": payload.get("scope"),
+            "sub": payload.get("sub"),
+            "client_id": payload.get("sub")
+        }
+    except jwt.InvalidTokenError:
+        return {"active": False}
 
 # Pydantic models for request/response
 class ChatRequest(BaseModel):
