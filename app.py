@@ -19,10 +19,10 @@ app = FastAPI(title="Real Estate Agent API", version="1.0.0")
 
 # Security setup
 security = HTTPBearer()
-API_KEYS = os.getenv("API_KEYS", "").split(",")  # Comma-separated list of valid API keys
+API_KEYS = os.getenv("API_KEY", "").split(",")  # Comma-separated list of valid API keys
 
 # OAuth2 settings - reuse existing API keys
-OAUTH2_SECRET = os.getenv("API_KEYS", "").split(",")[0] if os.getenv("API_KEYS") else "fallback-secret"
+OAUTH2_SECRET = os.getenv("API_KEY", "").split(",")[0] if os.getenv("API_KEY") else "fallback-secret"
 
 def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
     """Verify API key from Authorization header"""
