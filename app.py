@@ -11,6 +11,7 @@ from authlib.integrations.starlette_client import OAuth
 from authlib.oauth2.rfc6749 import grants
 from authlib.oauth2.rfc7636 import CodeChallenge
 from starlette.middleware.sessions import SessionMiddleware
+import jwt
 
 # Import your chatbot components
 from real_estate_agent import graph, State
